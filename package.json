@@ -1,0 +1,28 @@
+{
+  "name": "isit950-project-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chenkan0617chris/ISIT950-project-backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chenkan0617chris/ISIT950-project-backend/issues"
+  },
+  "homepage": "https://github.com/chenkan0617chris/ISIT950-project-backend#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mysql": "^2.18.1",
+    "typescript": "^5.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.3"
+  }
+}
