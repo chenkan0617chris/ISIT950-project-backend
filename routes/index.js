@@ -4,7 +4,7 @@ var connection = require('../db/database.ts');
 
 var crypto = require('crypto');
 const { type } = require('os');
-
+var moment = require('moment');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -215,5 +215,57 @@ router.post('/getMenus', (req, res) => {
         console.log(e);
     }
 });
+
+
+router.post('/order', (req, res) => {
+    let data = req.body.data;
+    console.log(data);
+    var now = moment().format("YYYY-MM-DD hh:mm:ss");
+
+    let order_sql = "insert into orders (customer_id, restaurant_id, items, total_price, order_time, status) values (?, ?, ?, ?, ?, ?);";
+
+    try {
+        connection.query(order_sql, [data.cid, data.items[0].rid, JSON.stringify(data.items), data.total, now, 'submitted'], (err, result) => {
+            if(err) {
+                console.error('ERROR' + err.stack);
+                return res.status(500).json({
+                    error: 'Fail to fetch'
+                })
+            }
+            res.send({ message: 'Ordered successfully!' })
+        });
+    } catch(e) {
+        console.log(e);
+    }
+    
+});
+
+router.post('/history', (req, res) => {
+    let data = req.body.data;
+    console.log(data);
+    let history_sql;
+
+    if(data.status === 'all') {
+        history_sql = "select * from orders O join restaurants R on R.rid = O.restaurant_id where O.customer_id = ? order by O.order_time desc";
+
+    } else {
+        history_sql = "select * from orders O join restaurants R on R.rid = O.restaurant_id where O.customer_id = ? and O.status = ? order by O.order_time desc;";
+    }
+
+    try {
+        connection.query(history_sql, [data.cid, data.status], (err, result) => {
+            if(err) {
+                console.error('ERROR' + err.stack);
+                return res.status(500).json({
+                    error: 'Fail to fetch'
+                })
+            } 
+            res.json(result);
+        });
+    } catch(e) {
+        console.log(e);
+    }
+});
+
 
 module.exports = router;
