@@ -4,7 +4,6 @@ var connection = require('../db/database.ts');
 
 var crypto = require('crypto');
 const { type } = require('os');
-var moment = require('moment');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -27,7 +26,7 @@ router.post('/login', (req, res) => {
     } else if(data.type === 'restaurants'){
         sql = `select * from restaurants where username = ? and password = ?`;
     } else {
-        sql = `select * from deliveryPerson where username = ? and password = ?`;
+        sql = `select * from deliveryPersons where username = ? and password = ?`;
     }
 
       try {
@@ -68,7 +67,7 @@ router.post('/register', (req, res) => {
     } else if(data.type === 'restaurants'){
         search_sql = `select * from restaurants where username = ?`;
     } else {
-        search_sql = `select * from deliveryPerson where username = ?`;
+        search_sql = `select * from deliveryPersons where username = ?`;
     }
 
     console.log(data);
@@ -90,18 +89,18 @@ router.post('/register', (req, res) => {
                             
                 let register_sql = '';
                 if(data.type === 'customers') {
-                    register_sql = `insert into customers (username, password,address, postcode,) values (?,?,?,?)`;
+                    register_sql = `insert into customers (username, password,address, postcode, phone) values (?,?,?,?,?)`;
                 } else if(data.type === 'restaurants'){
-                    register_sql = `insert into restaurants (username, password, title, address, postcode) values (?,?,?,?,?)`;
+                    register_sql = `insert into restaurants (username, password, title, address, postcode, phone) values (?,?,?,?,?,?)`;
                 } else {
-                    register_sql = `insert into deliveryPerson (username, password, address, postcode) values (?,?,?,?)`;
+                    register_sql = `insert into deliveryPersons (username, password, address, postcode, phone) values (?,?,?,?,?)`;
                 }
                 try {
                     let newData;
                     if(data.type === 'restaurants') {
-                        newData = [data.username, data.password,data.title, data.address, data.postcode];
+                        newData = [data.username, data.password,data.title, data.address, Number(data.postcode), data.phone];
                     } else {
-                        newData = [data.username, data.password, data.address, data.postcode];
+                        newData = [data.username, data.password, data.address, Number(data.postcode), data.phone];
                     }
                     connection.query(register_sql, newData, (err, results) => {
                         if(err) {
@@ -197,7 +196,7 @@ router.post('/getRestaurant', (req, res) => {
 router.post('/getMenus', (req, res) => {
     let data = req.body.data;
 
-    let res_sql = 'select * from menus M join restaurants R on M.restaurant_id = R.rid where R.title = ?;';
+    let res_sql = 'select r.rid, r.title, r.address, r.postcode, r.phone, r.description as R_description,  M.* from menus M join restaurants R on M.restaurant_id = R.rid where R.title = ?;';
 
     try {
         console.log(data);
@@ -217,55 +216,9 @@ router.post('/getMenus', (req, res) => {
 });
 
 
-router.post('/order', (req, res) => {
-    let data = req.body.data;
-    console.log(data);
-    var now = moment().format("YYYY-MM-DD hh:mm:ss");
 
-    let order_sql = "insert into orders (customer_id, restaurant_id, items, total_price, order_time, status) values (?, ?, ?, ?, ?, ?);";
 
-    try {
-        connection.query(order_sql, [data.cid, data.items[0].rid, JSON.stringify(data.items), data.total, now, 'submitted'], (err, result) => {
-            if(err) {
-                console.error('ERROR' + err.stack);
-                return res.status(500).json({
-                    error: 'Fail to fetch'
-                })
-            }
-            res.send({ message: 'Ordered successfully!' })
-        });
-    } catch(e) {
-        console.log(e);
-    }
-    
-});
 
-router.post('/history', (req, res) => {
-    let data = req.body.data;
-    console.log(data);
-    let history_sql;
-
-    if(data.status === 'all') {
-        history_sql = "select * from orders O join restaurants R on R.rid = O.restaurant_id where O.customer_id = ? order by O.order_time desc";
-
-    } else {
-        history_sql = "select * from orders O join restaurants R on R.rid = O.restaurant_id where O.customer_id = ? and O.status = ? order by O.order_time desc;";
-    }
-
-    try {
-        connection.query(history_sql, [data.cid, data.status], (err, result) => {
-            if(err) {
-                console.error('ERROR' + err.stack);
-                return res.status(500).json({
-                    error: 'Fail to fetch'
-                })
-            } 
-            res.json(result);
-        });
-    } catch(e) {
-        console.log(e);
-    }
-});
 
 
 module.exports = router;
