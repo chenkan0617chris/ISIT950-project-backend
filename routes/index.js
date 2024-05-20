@@ -5,7 +5,6 @@ var connection = require('../db/database.ts');
 var crypto = require('crypto');
 const { type } = require('os');
 
-
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
@@ -27,7 +26,7 @@ router.post('/login', (req, res) => {
     } else if(data.type === 'restaurants'){
         sql = `select * from restaurants where username = ? and password = ?`;
     } else {
-        sql = `select * from deliveryPerson where username = ? and password = ?`;
+        sql = `select * from deliveryPersons where username = ? and password = ?`;
     }
 
       try {
@@ -68,7 +67,7 @@ router.post('/register', (req, res) => {
     } else if(data.type === 'restaurants'){
         search_sql = `select * from restaurants where username = ?`;
     } else {
-        search_sql = `select * from deliveryPerson where username = ?`;
+        search_sql = `select * from deliveryPersons where username = ?`;
     }
 
     console.log(data);
@@ -90,18 +89,20 @@ router.post('/register', (req, res) => {
                             
                 let register_sql = '';
                 if(data.type === 'customers') {
-                    register_sql = `insert into customers (username, password,address, postcode,) values (?,?,?,?)`;
+                    register_sql = `insert into customers (username, password, name, address, postcode, phone) values (?,?,?,?,?,?)`;
                 } else if(data.type === 'restaurants'){
-                    register_sql = `insert into restaurants (username, password, title, address, postcode) values (?,?,?,?,?)`;
+                    register_sql = `insert into restaurants (username, password, title, address, postcode, phone) values (?,?,?,?,?,?)`;
                 } else {
-                    register_sql = `insert into deliveryPerson (username, password, address, postcode) values (?,?,?,?)`;
+                    register_sql = `insert into deliveryPersons (username, password, address, postcode, phone) values (?,?,?,?,?)`;
                 }
                 try {
                     let newData;
-                    if(data.type === 'restaurants') {
-                        newData = [data.username, data.password,data.title, data.address, data.postcode];
+                    if(data.type === 'customers') {
+                        newData = [data.username, data.password,data.name, data.title, data.address, Number(data.postcode), data.phone];
+                    } else if(data.type === 'restaurants') {
+                        newData = [data.username, data.password,data.title, data.address, Number(data.postcode), data.phone];
                     } else {
-                        newData = [data.username, data.password, data.address, data.postcode];
+                        newData = [data.username, data.password, data.address, Number(data.postcode), data.phone];
                     }
                     connection.query(register_sql, newData, (err, results) => {
                         if(err) {
@@ -197,7 +198,7 @@ router.post('/getRestaurant', (req, res) => {
 router.post('/getMenus', (req, res) => {
     let data = req.body.data;
 
-    let res_sql = 'select * from menus M join restaurants R on M.restaurant_id = R.rid where R.title = ?;';
+    let res_sql = 'select r.rid, r.title, r.address, r.postcode, r.phone, r.description as R_description,  M.* from menus M join restaurants R on M.restaurant_id = R.rid where R.title = ?;';
 
     try {
         console.log(data);
@@ -215,5 +216,36 @@ router.post('/getMenus', (req, res) => {
         console.log(e);
     }
 });
+
+router.post('/getCustomer', (req, res) => {
+    let data = req.body.data;
+
+    let sql = 'select * from customers where cid = ?;';
+
+    try {
+        connection.query(sql, [data.cid], (err, result) => {
+            if(err) {
+                console.error('ERROR' + err.stack);
+                return res.status(500).json({
+                    error: 'Fail to fetch'
+                })
+            } 
+            const userInfo = result[0];
+            res.status(200);
+            res.send({
+                ...userInfo,
+                type: 'customers'
+            });
+        });
+    } catch (e) {
+        console.log(e);
+    }
+});
+
+
+
+
+
+
 
 module.exports = router;
