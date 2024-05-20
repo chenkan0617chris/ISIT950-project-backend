@@ -89,7 +89,7 @@ router.post('/register', (req, res) => {
                             
                 let register_sql = '';
                 if(data.type === 'customers') {
-                    register_sql = `insert into customers (username, password,address, postcode, phone) values (?,?,?,?,?)`;
+                    register_sql = `insert into customers (username, password, name, address, postcode, phone) values (?,?,?,?,?,?)`;
                 } else if(data.type === 'restaurants'){
                     register_sql = `insert into restaurants (username, password, title, address, postcode, phone) values (?,?,?,?,?,?)`;
                 } else {
@@ -97,7 +97,9 @@ router.post('/register', (req, res) => {
                 }
                 try {
                     let newData;
-                    if(data.type === 'restaurants') {
+                    if(data.type === 'customers') {
+                        newData = [data.username, data.password,data.name, data.title, data.address, Number(data.postcode), data.phone];
+                    } else if(data.type === 'restaurants') {
                         newData = [data.username, data.password,data.title, data.address, Number(data.postcode), data.phone];
                     } else {
                         newData = [data.username, data.password, data.address, Number(data.postcode), data.phone];
@@ -209,6 +211,31 @@ router.post('/getMenus', (req, res) => {
             } 
             console.log(result);
             res.json(result);
+        });
+    } catch (e) {
+        console.log(e);
+    }
+});
+
+router.post('/getCustomer', (req, res) => {
+    let data = req.body.data;
+
+    let sql = 'select * from customers where cid = ?;';
+
+    try {
+        connection.query(sql, [data.cid], (err, result) => {
+            if(err) {
+                console.error('ERROR' + err.stack);
+                return res.status(500).json({
+                    error: 'Fail to fetch'
+                })
+            } 
+            const userInfo = result[0];
+            res.status(200);
+            res.send({
+                ...userInfo,
+                type: 'customers'
+            });
         });
     } catch (e) {
         console.log(e);

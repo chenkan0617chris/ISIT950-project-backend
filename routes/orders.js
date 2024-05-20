@@ -2,30 +2,45 @@ var express = require('express');
 var router = express.Router();
 var connection = require('../db/database.ts');
 var moment = require('moment');
-
+const DELIVERY_TIME = 10;
 var crypto = require('crypto');
 const { type } = require('os');
 
 router.post('/order', (req, res) => {
     let data = req.body.data;
-    var now = moment().format("YYYY-MM-DD H:mm:ss");
+    let newBalance = data.balance - data.total;
 
-    let order_sql = "insert into orders (customer_id, restaurant_id, items, total_price, order_time, status) values (?, ?, ?, ?, ?, ?);";
+    let update_sql = 'update customers set balance = ? where cid = ?';
 
     try {
-        connection.query(order_sql, [data.cid, data.items[0].rid, JSON.stringify(data.items), data.total, now, 'submitted'], (err, result) => {
+        connection.query(update_sql, [newBalance, data.cid], (err, result) => {
             if(err) {
                 console.error('ERROR' + err.stack);
                 return res.status(500).json({
                     error: 'Fail to fetch'
                 })
             }
-            res.send({ message: 'Ordered successfully!' })
+            var now = moment().format("YYYY-MM-DD H:mm:ss");
+
+            let order_sql = "insert into orders (customer_id, restaurant_id, items, total_price, order_time, status) values (?, ?, ?, ?, ?, ?);";
+        
+            try {
+                connection.query(order_sql, [data.cid, data.items[0].rid, JSON.stringify(data.items), data.total, now, 'submitted'], (err, result) => {
+                    if(err) {
+                        console.error('ERROR' + err.stack);
+                        return res.status(500).json({
+                            error: 'Fail to fetch'
+                        })
+                    }
+                    res.send({ message: 'Ordered successfully!' })
+                });
+            } catch(e) {
+                console.log(e);
+            }
         });
-    } catch(e) {
+    }catch(e) {
         console.log(e);
     }
-    
 });
 
 router.post('/orderList', (req, res) => {
@@ -125,7 +140,7 @@ router.post('/restaurantConfirmOrder', (req, res) => {
                 })
             }
 
-            const estimate_time = result[0]?.estimate_time;
+            const estimate_time = Math.abs(result[0]?.estimate_time) + DELIVERY_TIME;
 
             let confirm_sql = `update orders set status = 'processing', estimate_time = ${estimate_time} where oid = ?;`;
 
@@ -139,6 +154,43 @@ router.post('/restaurantConfirmOrder', (req, res) => {
                     }
                     res.status(200);
                     res.send({ message: 'Order confirmed successfully!' })
+                });
+            } catch(e) {
+                console.log(e);
+            }
+        });
+    } catch(e) {
+        console.log(e);
+    }
+});
+
+router.post('/cancelOrder', (req, res) => {
+    let data = req.body.data;
+    let cancel_sql = 'update orders set status = ? where oid = ?';
+    console.log(data);
+
+    try {
+        connection.query(cancel_sql, ['canceled', data.oid], (err, result) => {
+            if(err) {
+                console.error('ERROR' + err.stack);
+                return res.status(500).json({
+                    error: 'Fail to fetch'
+                })
+            }
+
+            let update_sql = `update customers set balance = balance + ? where cid = ?;`;
+
+            try {
+                console.log(update_sql);
+                connection.query(update_sql, [data.total_price, data.cid], (err, result) => {
+                    if(err) {
+                        console.error('ERROR' + err.stack);
+                        return res.status(500).json({
+                            error: 'Fail to fetch'
+                        })
+                    }
+                    res.status(200);
+                    res.send({ message: 'Order canceled successfully!' })
                 });
             } catch(e) {
                 console.log(e);
@@ -228,6 +280,58 @@ router.post('/restaurantCompleteOrder', (req, res) => {
     }
 
 });
+
+router.post('/orderDetail', (req, res) => {
+    let data = req.body.data;
+
+    let sql = `select O.*, C.name as customer_name, C.phone as customer_phone, C.address as customer_address, C.postcode as customer_postcode, 
+            DP.username as delivery_name, DP.phone as delivery_phone, R.title as restaurant_title, R.address as restaurant_address, R.postcode as restaurant_postcode  
+            from orders O left join delivery D on O.oid = D.order_id 
+            left join deliverypersons DP on D.deliveryperson_id = DP.did 
+            left join restaurants R on O.restaurant_id = R.rid 
+            left join customers C on O.customer_id = C.cid 
+            where O.oid = ?;`;
+
+    try {
+        connection.query(sql, [data.oid], (err, result) => {
+            if(err) {
+                console.error('ERROR' + err.stack);
+                return res.status(500).json({
+                    error: 'Fail to fetch'
+                })
+            }
+            res.status(200);
+            res.json(result);
+        });
+    } catch(e) {
+        console.log(e);
+    }
+
+});
+
+router.post('/rating', (req, res) => {
+    let data = req.body.data;
+
+    let sql = 'update orders set rate = ? where oid = ?;';
+
+    try {
+        connection.query(sql, [data.rate, data.oid], (err, result) => {
+            if(err) {
+                console.error('ERROR' + err.stack);
+                return res.status(500).json({
+                    error: 'Fail to fetch'
+                })
+            }
+            res.status(200);
+            res.send({ message: 'Rating successfully!' });
+        });
+    } catch(e) {
+        console.log(e);
+    }
+});
+
+
+
 
 
 

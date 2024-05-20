@@ -137,5 +137,29 @@ router.post('/editDish', function(req, res, next) {
 });
 
 
+router.post('/membership', function(req, res, next) {
+
+  let data = req.body.data;
+
+  let sql = "update customers set membership = 1, membership_expire_date = ? where cid = ?;";
+
+  try {
+    connection.query(sql, [data.membership_expire_date, data.cid], (error, result) => {
+      if(error) {
+        console.log(error);
+        res.status(400);
+        res.send({message: error.message});
+        return;
+      }
+      res.status(200);
+      res.send({message: 'membership active successfully!'});
+
+    })
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+
 
 module.exports = router;
