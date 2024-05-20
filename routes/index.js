@@ -98,7 +98,7 @@ router.post('/register', (req, res) => {
                 try {
                     let newData;
                     if(data.type === 'customers') {
-                        newData = [data.username, data.password,data.name, data.title, data.address, Number(data.postcode), data.phone];
+                        newData = [data.username, data.password,data.name, data.address, Number(data.postcode), data.phone];
                     } else if(data.type === 'restaurants') {
                         newData = [data.username, data.password,data.title, data.address, Number(data.postcode), data.phone];
                     } else {
