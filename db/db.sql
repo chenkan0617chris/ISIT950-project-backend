@@ -27,7 +27,7 @@ create table restaurants (
     address char(50) not null,
     postcode int not null,
     category char(20),
-    rate decimal(1,2)
+    rate decimal(3,2)
 );
 
 create table deliverypersons (
