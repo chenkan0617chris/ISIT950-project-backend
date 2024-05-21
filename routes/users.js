@@ -48,12 +48,10 @@ router.post('/updateSettings', function(req, res, next) {
 router.post('/updateRestaurantSettings', function(req, res, next) {
   let data = req.body.data;
 
-  console.log(data);
-
-  let update_sql = 'update Restaurants set title=?, description=?, phone=?, email=?, address=?, postcode=? where rid = ?'
+  let update_sql = 'update Restaurants set title=?, description=?, phone=?, email=?, address=?, postcode=?, category=? where rid = ?'
 
   try {
-    connection.query(update_sql, [data.title, data.description, data.phone, data.email, data.address, data.postcode, data.rid], (error, result) => {
+    connection.query(update_sql, [data.title, data.description, data.phone, data.email, data.address, data.postcode, data.category, data.rid], (error, result) => {
       if(error) {
         console.log(error);
         res.status(400);

@@ -312,18 +312,42 @@ router.post('/orderDetail', (req, res) => {
 router.post('/rating', (req, res) => {
     let data = req.body.data;
 
-    let sql = 'update orders set rate = ? where oid = ?;';
+    let sql = 'update orders set rating = ? where oid = ?;';
 
     try {
-        connection.query(sql, [data.rate, data.oid], (err, result) => {
+        connection.query(sql, [data.rating, data.oid], (err, result) => {
             if(err) {
                 console.error('ERROR' + err.stack);
                 return res.status(500).json({
                     error: 'Fail to fetch'
                 })
             }
-            res.status(200);
-            res.send({ message: 'Rating successfully!' });
+
+            let select_rating_sql = "select avg(O.rating) as rating from orders O join restaurants R on O.restaurant_id = R.rid where R.rid = ? group by O.restaurant_id;"
+            connection.query(select_rating_sql, [data.rid], (err, result) => {
+                if(err) {
+                    console.error('ERROR' + err.stack);
+                    return res.status(500).json({
+                        error: 'Fail to fetch'
+                    })
+                }
+                if(result) {
+                    let newRating = result[0].rating;
+                    let update_sql = "update restaurants set rating = ? where rid = ?";
+                    connection.query(update_sql, [newRating, data.rid], (err, result) => {
+                        if(err) {
+                            console.error('ERROR' + err.stack);
+                            return res.status(500).json({
+                                error: 'Fail to fetch'
+                            })
+                        }
+                        res.status(200);
+                        res.send({ message: 'Rating successfully!' });
+                    })
+                }
+
+            })
+            
         });
     } catch(e) {
         console.log(e);

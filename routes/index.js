@@ -134,25 +134,20 @@ router.post('/search', (req, res) => {
 
     let data = req.body.data;
 
+    console.log(data);
+
     let user_postcode = data.postcode;
 
-    console.log('data', data);
-
     let distance = data.distance + user_postcode;
+
+    let category = data.category === 'all' || !data.category ? '' : data.category;
+    let title = data.name ? data.name : '';
     let sql;
 
-    if(data.name) {
-        if(data.distance) {
-            sql = `SELECT * FROM restaurants where title like '%${data.name}%' and postcode <= ${distance}`;
-        } else {
-            sql = `SELECT * FROM restaurants where title like '%${data.name}%'`;
-        }
+    if(data.distance) {
+        sql = `SELECT * FROM restaurants where rating >= ${Number(data.rating)} and category like '%${category}%' and title like '%${title}%' and postcode <= ${distance}`;
     } else {
-        if(data.distance) {
-            sql = `SELECT * FROM restaurants where postcode <= ${distance}`;
-        } else {
-            sql = `SELECT * FROM restaurants`;
-        }
+        sql = `SELECT * FROM restaurants where rating >= ${Number(data.rating)} and category like '%${category}%' and title like '%${title}%'`;
     }
 
     try {
