@@ -27,7 +27,7 @@ create table restaurants (
     address char(50) not null,
     postcode int not null,
     category char(20),
-    rate decimal(3,2)
+    rating decimal(3,2) default 0
 );
 
 create table deliverypersons (
@@ -61,7 +61,7 @@ create table orders (
     estimate_time int,
     finish_time datetime,
     status char(20) not null,
-    rate int,
+    rating int,
 	constraint foreign key(customer_id) references customers(cid),
 	constraint foreign key(restaurant_id) references restaurants(rid)
 );
